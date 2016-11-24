@@ -1,0 +1,93 @@
+#!/bin/zsh
+
+typeset -Ag _abbrev_aliases
+
+__abbrev_alias::magic_abbrev_expand() {
+  local MATCH
+  LBUFFER=${LBUFFER%%(#m)[-_a-zA-Z0-9]#}
+  local abbr=${_abbrev_aliases[$MATCH]:- $MATCH}
+  local kind=${abbr[1,1]}
+  local newbuffer=${abbr[2,-1]}
+  if [[ $kind == "f" ]]; then
+    newbuffer=$(eval $newbuffer)
+  elif [[ $kind == "c" && $LBUFFER != "" ]]; then
+    newbuffer=$MATCH
+  fi
+  LBUFFER+=$newbuffer
+  zle self-insert
+}
+
+__abbrev_alias::no_magic_abbrev_expand() {
+  LBUFFER+=' '
+}
+
+__abbrev_alias::init() {
+  setopt extended_glob
+  zle -N __abbrev_alias::magic_abbrev_expand
+  zle -N __abbrev_alias::no_magic_abbrev_expand
+  bindkey " "   __abbrev_alias::magic_abbrev_expand
+  bindkey "^x " __abbrev_alias::no_magic_abbrev_expand
+}
+
+__abbrev_alias::list() {
+  local key value kind
+  local filter=$1
+  for key in ${(k)_abbrev_aliases}; do
+    value=${_abbrev_aliases[$key]}
+    kind=${value[1,1]}
+    value=${value[2,-1]}
+    if [[ -z $filter || $filter == $key ]]; then
+      echo "$kind $key='$value'"
+    fi
+  done
+}
+
+__abbrev_alias::help() {
+  echo "help"
+}
+
+__abbrev_alias::unregist() {
+  local key=$1
+  if [[ -n "${_abbrev_aliases[$key]}" ]]; then
+    unalias $key
+    unset "_abbrev_aliases[$key]"
+  else
+    echo "no such alias: $key" >&2
+  fi
+}
+
+__abbrev_alias::regist() {
+  local kind=$1
+  if [[ $kind == u ]]; then
+    __abbrev_alias::unregist $2
+    return
+  fi
+  local key=${2%%=*} value=${2#*=}
+  if [[ $key == $value ]]; then
+    __abbrev_alias::list $2
+    return
+  fi
+  case "$kind" in
+    u) unalias $key;;
+    g) alias -g $key="$value";;
+    f) alias -g $key="\$($value)";;
+    c) alias    $key="$value";;
+  esac
+  _abbrev_aliases[$key]="$kind$value"
+}
+
+# option parse & execute
+local kind=c
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -i|--init)        __abbrev_alias::init; return;;
+    -l|--list)        shift; __abbrev_alias::list $*; return;;
+    -h|--help)        __abbrev_alias::help; return;;
+    -u|--unset)       kind=u;;
+    -c|--command)     kind=c;;
+    -g|--global)      kind=g;;
+    -f|--functional)  kind=f;;
+    *) __abbrev_alias::regist $kind $1;;
+  esac
+  shift
+done
