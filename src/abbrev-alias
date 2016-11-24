@@ -39,7 +39,7 @@ __abbrev_alias::list() {
     kind=${value[1,1]}
     value=${value[2,-1]}
     if [[ $kind_filter == a || $kind_filter == $kind ]]; then
-      echo "$kind $key='$value'"
+      echo "$key='$value'"
     fi
   done
 }
