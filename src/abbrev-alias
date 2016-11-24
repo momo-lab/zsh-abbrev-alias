@@ -43,7 +43,18 @@ __abbrev_alias::list() {
 }
 
 __abbrev_alias::help() {
-  echo "help"
+  echo "usage: abbrev-alias [OPTIONS] {name=value ...}"
+  echo "       abbrev-alias -u {name ...}"
+  echo "       abbrev-alias --list"
+  echo "       abbrev-alias --init"
+  echo
+  echo "options:"
+  echo "  -c, --command   register as 'alias name=value'"
+  echo "  -g, --global    register as 'alias -g name=value'"
+  echo "  -f, --function  register as 'alias -g name=\$(value)'"
+  echo "  -l, --list      list of registered alias"
+  echo "  -i, --init      initialize abbrev-alias. execute with .zshrc"
+  echo "  -h, --help      show this help"
 }
 
 __abbrev_alias::unregist() {
