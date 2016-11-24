@@ -32,13 +32,13 @@ __abbrev_alias::init() {
 }
 
 __abbrev_alias::list() {
-  local filter=$1
+  local kind_filter=$1
   local key value kind
   for key in ${(k)_abbrev_aliases}; do
     value=${_abbrev_aliases[$key]}
     kind=${value[1,1]}
     value=${value[2,-1]}
-    if [[ -z $filter || $filter == $key ]]; then
+    if [[ $kind_filter == a || $kind_filter == $kind ]]; then
       echo "$kind $key='$value'"
     fi
   done
@@ -52,16 +52,16 @@ __abbrev_alias::help() {
   __abbrev_alias::version
   echo "usage: abbrev-alias [OPTIONS] {name=value ...}"
   echo "       abbrev-alias -u {name ...}"
-  echo "       abbrev-alias --list"
   echo "       abbrev-alias --init"
   echo
   echo "options:"
   echo "  -c, --command   register as 'alias name=value'"
   echo "  -g, --global    register as 'alias -g name=value'"
   echo "  -f, --function  register as 'alias -g name=\$(value)'"
-  echo "  -l, --list      list of registered alias"
+  echo
   echo "  -i, --init      initialize abbrev-alias. execute with .zshrc"
   echo "  -h, --help      show this help"
+  echo "  -v, --version   show version"
 }
 
 __abbrev_alias::unregist() {
@@ -95,18 +95,21 @@ __abbrev_alias::regist() {
 }
 
 # option parse & execute
-local kind=c
+local kind
+local is_regist
 while [ $# -gt 0 ]; do
   case "$1" in
     -i|--init)      __abbrev_alias::init; return;;
-    -l|--list)      shift; __abbrev_alias::list $*; return;;
     -h|--help)      __abbrev_alias::help; return;;
     -v|--version)   __abbrev_alias::version; return;;
     -u|--unset)     kind=u;;
     -c|--command)   kind=c;;
     -g|--global)    kind=g;;
     -f|--function)  kind=f;;
-    *) __abbrev_alias::regist $kind $1;;
+    *) __abbrev_alias::regist ${kind:-c} $1; is_regist=1;;
   esac
   shift
 done
+if [[ $is_regist -ne 1 ]]; then
+  __abbrev_alias::list ${kind:-a}
+fi
