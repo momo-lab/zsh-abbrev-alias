@@ -1,5 +1,7 @@
 #!/bin/zsh
 
+_ABBREV_ALIAS_VERSION='0.1.0'
+
 typeset -Ag _abbrev_aliases
 
 __abbrev_alias::magic_abbrev_expand() {
@@ -42,7 +44,12 @@ __abbrev_alias::list() {
   done
 }
 
+__abbrev_alias::version() {
+  echo "abbrev-alias ${_ABBREV_ALIAS_VERSION}"
+}
+
 __abbrev_alias::help() {
+  __abbrev_alias::version
   echo "usage: abbrev-alias [OPTIONS] {name=value ...}"
   echo "       abbrev-alias -u {name ...}"
   echo "       abbrev-alias --list"
@@ -94,6 +101,7 @@ while [ $# -gt 0 ]; do
     -i|--init)      __abbrev_alias::init; return;;
     -l|--list)      shift; __abbrev_alias::list $*; return;;
     -h|--help)      __abbrev_alias::help; return;;
+    -v|--version)   __abbrev_alias::version; return;;
     -u|--unset)     kind=u;;
     -c|--command)   kind=c;;
     -g|--global)    kind=g;;
