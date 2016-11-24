@@ -30,8 +30,8 @@ __abbrev_alias::init() {
 }
 
 __abbrev_alias::list() {
-  local key value kind
   local filter=$1
+  local key value kind
   for key in ${(k)_abbrev_aliases}; do
     value=${_abbrev_aliases[$key]}
     kind=${value[1,1]}
