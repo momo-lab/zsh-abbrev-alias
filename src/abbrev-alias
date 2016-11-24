@@ -80,13 +80,13 @@ __abbrev_alias::regist() {
 local kind=c
 while [ $# -gt 0 ]; do
   case "$1" in
-    -i|--init)        __abbrev_alias::init; return;;
-    -l|--list)        shift; __abbrev_alias::list $*; return;;
-    -h|--help)        __abbrev_alias::help; return;;
-    -u|--unset)       kind=u;;
-    -c|--command)     kind=c;;
-    -g|--global)      kind=g;;
-    -f|--functional)  kind=f;;
+    -i|--init)      __abbrev_alias::init; return;;
+    -l|--list)      shift; __abbrev_alias::list $*; return;;
+    -h|--help)      __abbrev_alias::help; return;;
+    -u|--unset)     kind=u;;
+    -c|--command)   kind=c;;
+    -g|--global)    kind=g;;
+    -f|--function)  kind=f;;
     *) __abbrev_alias::regist $kind $1;;
   esac
   shift
