@@ -75,16 +75,7 @@ __abbrev_alias::unregist() {
 }
 
 __abbrev_alias::regist() {
-  local kind=$1
-  if [[ $kind == u ]]; then
-    __abbrev_alias::unregist $2
-    return
-  fi
-  local key=${2%%=*} value=${2#*=}
-  if [[ $key == $value ]]; then
-    __abbrev_alias::list $2
-    return
-  fi
+  local kind=$1 key=${2%%=*} value=${2#*=}
   case "$kind" in
     u) unalias $key;;
     g) alias -g $key="$value";;
@@ -96,7 +87,7 @@ __abbrev_alias::regist() {
 
 # option parse & execute
 local kind
-local is_regist
+local -a args
 while [ $# -gt 0 ]; do
   case "$1" in
     -i|--init)      __abbrev_alias::init; return;;
@@ -106,10 +97,22 @@ while [ $# -gt 0 ]; do
     -c|--command)   kind=c;;
     -g|--global)    kind=g;;
     -f|--function)  kind=f;;
-    *) __abbrev_alias::regist ${kind:-c} $1; is_regist=1;;
+    *) args=("${args[@]}" $1) ;;
   esac
   shift
 done
-if [[ $is_regist -ne 1 ]]; then
+
+local value
+if [[ $#args == 0 ]]; then
   __abbrev_alias::list ${kind:-a}
+  return
+fi
+if [[ "$kind" == "u" ]]; then
+  for value in ${args[@]}; do
+    __abbrev_alias::unregist $value
+  done
+else
+  for value in ${args[@]}; do
+    __abbrev_alias::regist ${kind:-c} $value
+  done
 fi
