@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 
 _ABBREV_ALIAS_VERSION='0.1.0'
 
