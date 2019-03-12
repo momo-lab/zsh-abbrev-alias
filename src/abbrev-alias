@@ -12,8 +12,10 @@ __abbrev_alias::magic_abbrev_expand() {
   local newbuffer=${abbr[2,-1]}
   if [[ $kind == "f" ]]; then
     newbuffer=$(eval $newbuffer)
-  elif [[ $kind == "c" && $LBUFFER != "" ]]; then
+  elif [[ ($kind == "c" || $kind == "e") && $LBUFFER != "" ]]; then
     newbuffer=$MATCH
+  elif [[ $kind == "e" ]]; then
+    newbuffer=$(eval "echo \"$newbuffer\"")
   fi
   LBUFFER+=$newbuffer
   zle self-insert
@@ -56,6 +58,7 @@ __abbrev_alias::help() {
   echo
   echo "options:"
   echo "  -c, --command   register alias as 'alias name=value'"
+  echo "  -e, --eval      like -c but evaluates subshells on expansion"
   echo "  -g, --global    register alias as 'alias -g name=value'"
   echo "  -f, --function  register alias as 'alias -g name=\$(value)'"
   echo "  -u, --unset     unregister alias"
@@ -81,6 +84,7 @@ __abbrev_alias::regist() {
     g) alias -g $key="$value";;
     f) alias -g $key="\$($value)";;
     c) alias    $key="$value";;
+    e) alias    $key="$value";;
   esac
   _abbrev_aliases[$key]="$kind$value"
 }
@@ -95,6 +99,7 @@ while [ $# -gt 0 ]; do
     -v|--version)   __abbrev_alias::version; return;;
     -u|--unset)     kind=u;;
     -c|--command)   kind=c;;
+    -e|--eval)      kind=e;;
     -g|--global)    kind=g;;
     -f|--function)  kind=f;;
     *) args=("${args[@]}" $1) ;;
