@@ -24,7 +24,7 @@ $ ps aux | grep
 ```zsh
 $ git branch
 * master
-$ abbrev-alias -g -e B='$(git symbolic-ref --short HEAD 2> /dev/null)'"
+$ abbrev-alias -g -e B='$(git symbolic-ref --short HEAD 2> /dev/null)'
 $ git push origin B<push space key>
 ->
 $ git push origin master 
