@@ -77,7 +77,6 @@ __abbrev_alias::unregist() {
 __abbrev_alias::regist() {
   local kind=$1 key=${2%%=*} value=${2#*=}
   case "$kind" in
-    u) unalias $key;;
     g) alias -g $key="$value";;
     f) alias -g $key="\$($value)";;
     c) alias    $key="$value";;
