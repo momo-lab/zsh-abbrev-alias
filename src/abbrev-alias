@@ -106,35 +106,62 @@ __abbrev_alias::regist() {
 }
 
 # option parse & execute
-local kind
-local is_eval=0
-local -a args
-while [ $# -gt 0 ]; do
-  case "$1" in
-    -i|--init)      __abbrev_alias::init; return;;
-    -h|--help)      __abbrev_alias::help; return;;
-    -v|--version)   __abbrev_alias::version; return;;
-    -u|--unset)     kind=u;;
-    -c|--command)   kind=c;;
-    -g|--global)    kind=g;;
-    -f|--function)  kind=f;;
-    -e|--eval)      is_eval=1;;
-    *) args=("${args[@]}" $1) ;;
-  esac
-  shift
-done
+zparseopts -D -M -A opts -- \
+  -init i=-init \
+  -help h=-help \
+  -version v=-version \
+  -unset u=-unset \
+  -command c=-command \
+  -global g=-global \
+  -function f=-function \
+  -eval e=-eval
 
-local value
-if [[ $#args == 0 ]]; then
+# init
+if [[ -n ${opts[(i)--init]} ]]; then
+  __abbrev_alias::init
+  return
+fi
+
+# help
+if [[ -n ${opts[(i)--help]} ]]; then
+  __abbrev_alias::help
+  return
+fi
+
+# version
+if [[ -n ${opts[(i)--version]} ]]; then
+  __abbrev_alias::version
+  return
+fi
+
+# unregist
+if [[ -n ${opts[(i)--unset]} ]]; then
+  while [ $# -gt 0 ]; do
+    __abbrev_alias::unregist "$1"
+    shift
+  done
+  return
+fi
+
+# set options
+local kind
+if [[ -n ${opts[(i)--command]} ]]; then
+  kind=c
+elif [[ -n ${opts[(i)--global]} ]]; then
+  kind=g
+elif [[ -n ${opts[(i)--function]} ]]; then
+  kind=f
+fi 
+[[ ! -n ${opts[(i)--eval]} ]]; local is_eval=$?
+
+#list
+if [ $# -eq 0 ]; then
   __abbrev_alias::list ${kind:-a}
   return
 fi
-if [[ "$kind" == "u" ]]; then
-  for value in ${args[@]}; do
-    __abbrev_alias::unregist $value
-  done
-else
-  for value in ${args[@]}; do
-    __abbrev_alias::regist ${kind:-c} $is_eval $value
-  done
-fi
+
+# regist
+while [ $# -gt 0 ]; do
+  __abbrev_alias::regist ${kind:-c} $is_eval "$1"
+  shift
+done
