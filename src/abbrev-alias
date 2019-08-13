@@ -7,13 +7,15 @@ typeset -Ag _abbrev_aliases
 __abbrev_alias::magic_abbrev_expand() {
   local MATCH
   LBUFFER=${LBUFFER%%(#m)[-_a-zA-Z0-9]#}
-  local abbr=${_abbrev_aliases[$MATCH]:- $MATCH}
+  local abbr=${_abbrev_aliases[$MATCH]:-  $MATCH}
   local kind=${abbr[1,1]}
-  local newbuffer=${abbr[2,-1]}
-  if [[ $kind == "f" ]]; then
-    newbuffer=$(eval $newbuffer)
-  elif [[ $kind == "c" && $LBUFFER != "" ]]; then
+  local is_eval=${abbr[2,2]}
+  local newbuffer=${abbr[3,-1]}
+  if [[ $kind == "c" && $LBUFFER != "" ]]; then
     newbuffer=$MATCH
+  fi
+  if [[ "$is_eval" == "1" ]]; then
+    newbuffer=$(eval "echo \"$newbuffer\"")
   fi
   LBUFFER+=$newbuffer
   zle self-insert
@@ -37,7 +39,7 @@ __abbrev_alias::list() {
   for key in ${(k)_abbrev_aliases}; do
     value=${_abbrev_aliases[$key]}
     kind=${value[1,1]}
-    value=${value[2,-1]}
+    value=${value[3,-1]}
     if [[ $kind_filter == a || $kind_filter == $kind ]]; then
       echo "$key='$value'"
     fi
@@ -57,7 +59,7 @@ __abbrev_alias::help() {
   echo "options:"
   echo "  -c, --command   register alias as 'alias name=value'"
   echo "  -g, --global    register alias as 'alias -g name=value'"
-  echo "  -f, --function  register alias as 'alias -g name=\$(value)'"
+  echo "  -e, --eval      evaluates subshells on expansion. "
   echo "  -u, --unset     unregister alias"
   echo "  -i, --init      initialize abbrev-alias. execute with .zshrc"
   echo "  -h, --help      show this help"
@@ -75,17 +77,24 @@ __abbrev_alias::unregist() {
 }
 
 __abbrev_alias::regist() {
-  local kind=$1 key=${2%%=*} value=${2#*=}
+  local kind=$1 is_eval=$2 key=${3%%=*} value=${3#*=}
+  if [[ "$kind" == "f" ]]; then
+    echo "WARN: -f option is deprecated. Use -g -e options." 1>&2
+    echo "      ex) abbrev-alias -g -e $key='\$($value)'" 1>&2
+    value="\$($value)"
+    is_eval=1
+    kind=g
+  fi
   case "$kind" in
     g) alias -g $key="$value";;
-    f) alias -g $key="\$($value)";;
     c) alias    $key="$value";;
   esac
-  _abbrev_aliases[$key]="$kind$value"
+  _abbrev_aliases[$key]="$kind$is_eval$value"
 }
 
 # option parse & execute
 local kind
+local is_eval=0
 local -a args
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -96,6 +105,7 @@ while [ $# -gt 0 ]; do
     -c|--command)   kind=c;;
     -g|--global)    kind=g;;
     -f|--function)  kind=f;;
+    -e|--eval)      is_eval=1;;
     *) args=("${args[@]}" $1) ;;
   esac
   shift
@@ -112,6 +122,6 @@ if [[ "$kind" == "u" ]]; then
   done
 else
   for value in ${args[@]}; do
-    __abbrev_alias::regist ${kind:-c} $value
+    __abbrev_alias::regist ${kind:-c} $is_eval $value
   done
 fi
