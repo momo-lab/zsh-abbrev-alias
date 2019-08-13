@@ -24,7 +24,7 @@ $ ps aux | grep
 ```zsh
 $ git branch
 * master
-$ abbrev-alias -f B="git symbolic-ref --short HEAD"
+$ abbrev-alias -g -e B='$(git symbolic-ref --short HEAD 2> /dev/null)'"
 $ git push origin B<push space key>
 ->
 $ git push origin master 
@@ -43,8 +43,7 @@ usage: abbrev-alias [OPTIONS] {name=value ...}
 options:
   -c, --command   register as 'alias name=value'
   -g, --global    register as 'alias -g name=value'
-  -f, --function  register as 'alias -g name=$(value)'
-
+  -e, --eval      evaluates subshells on expansion.
   -i, --init      initialize abbrev-alias. execute with .zshrc
   -h, --help      show this help
   -v, --version   show version
