@@ -88,6 +88,7 @@ __abbrev_alias::unregist() {
     unset "_abbrev_aliases[$key]"
   else
     echo "no such alias: $key" >&2
+    return 1
   fi
 }
 
@@ -121,28 +122,30 @@ zparseopts -D -M -A opts -- \
 # init
 if [[ -n ${opts[(i)--init]} ]]; then
   __abbrev_alias::init
-  return
+  return 0
 fi
 
 # help
 if [[ -n ${opts[(i)--help]} ]]; then
   __abbrev_alias::help
-  return
+  return 0
 fi
 
 # version
 if [[ -n ${opts[(i)--version]} ]]; then
   __abbrev_alias::version
-  return
+  return 0
 fi
 
 # unregist
 if [[ -n ${opts[(i)--unset]} ]]; then
+  local result=0
   while [ $# -gt 0 ]; do
     __abbrev_alias::unregist "$1"
+    test $? -ne 0 && result=1
     shift
   done
-  return
+  return $result
 fi
 
 # set options
@@ -159,7 +162,7 @@ fi
 #list
 if [ $# -eq 0 ]; then
   __abbrev_alias::list ${kind:-gc}
-  return
+  return 0
 fi
 
 # regist
@@ -167,3 +170,4 @@ while [ $# -gt 0 ]; do
   __abbrev_alias::regist ${kind:-c} $is_eval "$1"
   shift
 done
+return 0
