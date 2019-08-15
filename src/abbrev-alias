@@ -144,10 +144,7 @@ elif [[ -n ${opts[(i)--global]} ]]; then
 elif [[ -n ${opts[(i)--function]} ]]; then
   kind=f
 fi 
-local is_eval=0
-if [[ -n ${opts[(i)--eval]} ]]; then
-  is_eval=1
-fi
+[[ ! -n ${opts[(i)--eval]} ]]; local is_eval=$?
 
 #list
 if [ $# -eq 0 ]; then
