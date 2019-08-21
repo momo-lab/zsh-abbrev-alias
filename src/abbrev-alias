@@ -136,7 +136,7 @@ if [[ -n ${opts[(i)--unset]} ]]; then
   local result=0
   while [ $# -gt 0 ]; do
     __abbrev_alias::unregist "$1"
-    [ $? -ne 0 ] && result=1
+    test $? -ne 0 && result=1
     shift
   done
   return $result
