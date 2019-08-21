@@ -11,13 +11,19 @@ __abbrev_alias::magic_abbrev_expand() {
   local kind=${${(s.\0.)abbr}[1]}
   local is_eval=${${(s.\0.)abbr}[2]}
   local newbuffer=${${(s.\0.)abbr}[3]:-$MATCH}
+  local cursor_string=${${(s.\0.)abbr}[4]}
   if [[ $kind == "c" && $LBUFFER != "" ]]; then
     newbuffer=$MATCH
   elif [[ "$is_eval" == "1" ]]; then
     newbuffer=$(eval "echo \"$newbuffer\"")
   fi
-  LBUFFER+=$newbuffer
-  zle self-insert
+  if [[ "$cursor_string" == "" ]]; then
+    LBUFFER+=$newbuffer
+    zle self-insert
+  else
+    LBUFFER+=${newbuffer%%${cursor_string}*}
+    RBUFFER=${newbuffer#*$cursor_string}$RBUFFER
+  fi
 }
 
 __abbrev_alias::no_magic_abbrev_expand() {
@@ -88,7 +94,7 @@ __abbrev_alias::unregist() {
 }
 
 __abbrev_alias::regist() {
-  local kind=$1 is_eval=$2 key=${3%%=*} value=${3#*=}
+  local kind=$1 is_eval=$2 cursor_string=$3 key=${4%%=*} value=${4#*=}
   if [[ "$kind" == "f" ]]; then
     echo "WARN: -f option is deprecated. Use -g -e options." 1>&2
     echo "      ex) abbrev-alias -g -e $key='\$($value)'" 1>&2
@@ -96,11 +102,13 @@ __abbrev_alias::regist() {
     is_eval=1
     kind=g
   fi
-  case "$kind" in
-    g) alias -g $key="$value";;
-    c) alias    $key="$value";;
-  esac
-  _abbrev_aliases[$key]="$kind\0$is_eval\0$value"
+  if [[ "$cursor_string" == "" ]]; then
+    case "$kind" in
+      g) alias -g $key="$value";;
+      c) alias    $key="$value";;
+    esac
+  fi
+  _abbrev_aliases[$key]="$kind\0$is_eval\0$value\0$cursor_string"
 }
 
 # option parse & execute
@@ -169,7 +177,7 @@ fi
 local result=0
 while [ $# -gt 0 ]; do
   if [[ "$1" =~ "=" ]]; then
-    __abbrev_alias::regist ${kind:-c} $is_eval "$1"
+    __abbrev_alias::regist ${kind:-c} $is_eval "$cursor_string" "$1"
   else
     __abbrev_alias::show ${kind:-c} $1
     test $? -ne 0 && result=1
