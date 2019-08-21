@@ -69,6 +69,8 @@ __abbrev_alias::help() {
   echo "  -c, --command   register alias as 'alias name=value'"
   echo "  -g, --global    register alias as 'alias -g name=value'"
   echo "  -e, --eval      evaluates subshells on expansion. "
+  echo "  --cursor[=cursor_string]"
+  echo "                  define cursor position. default cursor string is '{}'"
   echo "  -u, --unset     unregister alias"
   echo "  -i, --init      initialize abbrev-alias. execute with .zshrc"
   echo "  -h, --help      show this help"
