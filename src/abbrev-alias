@@ -46,17 +46,24 @@ __abbrev_alias::init() {
   bindkey "^x^M" accept-line
 }
 
+__abbrev_alias::show() {
+  local kind_filter=$1
+  local key=$2
+  local alias_data=${_abbrev_aliases[$key]}
+  test -n "$alias_data" || return 1
+  local kind=${alias_data[1,1]}
+  local value=${alias_data[3,-1]}
+  if [[ $kind_filter == $kind ]]; then
+    echo "$key='$value'"
+  fi
+  return 0
+}
+
 __abbrev_alias::list() {
   local kind_filters=$1
-  local key value kind
   for kind_filter in ${(s::)kind_filters}; do
     for key in ${(ko)_abbrev_aliases}; do
-      value=${_abbrev_aliases[$key]}
-      kind=${value[1,1]}
-      value=${value[3,-1]}
-      if [[ $kind_filter == $kind ]]; then
-        echo "$key='$value'"
-      fi
+      __abbrev_alias::show $kind_filter $key
     done
   done
 }
@@ -165,9 +172,15 @@ if [ $# -eq 0 ]; then
   return 0
 fi
 
-# regist
+# regist or show
+local result=0
 while [ $# -gt 0 ]; do
-  __abbrev_alias::regist ${kind:-c} $is_eval "$1"
+  if [[ "$1" =~ "=" ]]; then
+    __abbrev_alias::regist ${kind:-c} $is_eval "$1"
+  else
+    __abbrev_alias::show ${kind:-c} $1
+    test $? -ne 0 && result=1
+  fi
   shift
 done
-return 0
+return $result
