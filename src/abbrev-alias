@@ -7,10 +7,10 @@ typeset -Ag _abbrev_aliases
 __abbrev_alias::magic_abbrev_expand() {
   local MATCH
   LBUFFER=${LBUFFER%%(#m)[-_a-zA-Z0-9]#}
-  local abbr=${_abbrev_aliases[$MATCH]:-  $MATCH}
-  local kind=${abbr[1,1]}
-  local is_eval=${abbr[2,2]}
-  local newbuffer=${abbr[3,-1]}
+  local abbr=${_abbrev_aliases[$MATCH]}
+  local kind=${${(s.\0.)abbr}[1]}
+  local is_eval=${${(s.\0.)abbr}[2]}
+  local newbuffer=${${(s.\0.)abbr}[3]:-$MATCH}
   if [[ $kind == "c" && $LBUFFER != "" ]]; then
     newbuffer=$MATCH
   fi
@@ -36,10 +36,10 @@ __abbrev_alias::init() {
 __abbrev_alias::show() {
   local kind_filter=$1
   local key=$2
-  local alias_data=${_abbrev_aliases[$key]}
-  test -n "$alias_data" || return 1
-  local kind=${alias_data[1,1]}
-  local value=${alias_data[3,-1]}
+  local abbr=${_abbrev_aliases[$key]}
+  test -n "$abbr" || return 1
+  local kind=${${(s.\0.)abbr}[1]}
+  local value=${${(s.\0.)abbr}[3]}
   if [[ $kind_filter == $kind ]]; then
     echo "$key='$value'"
   fi
@@ -99,7 +99,7 @@ __abbrev_alias::regist() {
     g) alias -g $key="$value";;
     c) alias    $key="$value";;
   esac
-  _abbrev_aliases[$key]="$kind$is_eval$value"
+  _abbrev_aliases[$key]="$kind\0$is_eval\0$value"
 }
 
 # option parse & execute
