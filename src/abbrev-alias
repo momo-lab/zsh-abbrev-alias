@@ -13,8 +13,7 @@ __abbrev_alias::magic_abbrev_expand() {
   local newbuffer=${${(s.\0.)abbr}[3]:-$MATCH}
   if [[ $kind == "c" && $LBUFFER != "" ]]; then
     newbuffer=$MATCH
-  fi
-  if [[ "$is_eval" == "1" ]]; then
+  elif [[ "$is_eval" == "1" ]]; then
     newbuffer=$(eval "echo \"$newbuffer\"")
   fi
   LBUFFER+=$newbuffer
