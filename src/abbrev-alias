@@ -111,7 +111,8 @@ zparseopts -D -M -A opts -- \
   -command c=-command \
   -global g=-global \
   -function f=-function \
-  -eval e=-eval
+  -eval e=-eval \
+  -cursor::
 
 # init
 if [[ -n ${opts[(i)--init]} ]]; then
@@ -152,6 +153,10 @@ elif [[ -n ${opts[(i)--function]} ]]; then
   kind=f
 fi 
 [[ ! -n ${opts[(i)--eval]} ]]; local is_eval=$?
+[[ ! -n ${opts[(i)--cursor]} ]]; local is_cursor=$?
+if [ $is_cursor -eq 1 ]; then
+  local cursor_string=${${opts[--cursor]#=}:-'{}'}
+fi
 
 #list
 if [ $# -eq 0 ]; then
