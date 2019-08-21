@@ -33,17 +33,23 @@ __abbrev_alias::init() {
   bindkey "^x " __abbrev_alias::no_magic_abbrev_expand
 }
 
+__abbrev_alias::show() {
+  local kind_filter=$1
+  local key=$2
+  local alias_data=${_abbrev_aliases[$key]}
+  test -n $alias_data || return 1
+  local kind=${alias_data[1,1]}
+  local value=${alias_data[3,-1]}
+  if [[ $kind_filter == $kind ]]; then
+    echo "$key='$value'"
+  fi
+}
+
 __abbrev_alias::list() {
   local kind_filters=$1
-  local key value kind
   for kind_filter in ${(s::)kind_filters}; do
     for key in ${(ko)_abbrev_aliases}; do
-      value=${_abbrev_aliases[$key]}
-      kind=${value[1,1]}
-      value=${value[3,-1]}
-      if [[ $kind_filter == $kind ]]; then
-        echo "$key='$value'"
-      fi
+      __abbrev_alias::show $kind_filter $key
     done
   done
 }
