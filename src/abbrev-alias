@@ -18,7 +18,16 @@ __abbrev_alias::magic_abbrev_expand() {
     newbuffer=$(eval "echo \"$newbuffer\"")
   fi
   LBUFFER+=$newbuffer
-  zle self-insert
+}
+
+__abbrev_alias::magic_abbrev_expand_and_insert() {
+    zle __abbrev_alias::magic_abbrev_expand
+    zle self-insert
+}
+
+__abbrev_alias::magic_abbrev_expand_and_accept_line() {
+    zle __abbrev_alias::magic_abbrev_expand
+    zle accept-line
 }
 
 __abbrev_alias::no_magic_abbrev_expand() {
@@ -29,8 +38,12 @@ __abbrev_alias::init() {
   setopt extended_glob
   zle -N __abbrev_alias::magic_abbrev_expand
   zle -N __abbrev_alias::no_magic_abbrev_expand
-  bindkey " "   __abbrev_alias::magic_abbrev_expand
-  bindkey "^x " __abbrev_alias::no_magic_abbrev_expand
+  zle -N __abbrev_alias::magic_abbrev_expand_and_insert
+  zle -N __abbrev_alias::magic_abbrev_expand_and_accept_line
+  bindkey " "    __abbrev_alias::magic_abbrev_expand_and_insert
+  bindkey "^M"   __abbrev_alias::magic_abbrev_expand_and_accept_line
+  bindkey "^x "  __abbrev_alias::no_magic_abbrev_expand
+  bindkey "^x^M" accept-line
 }
 
 __abbrev_alias::list() {
