@@ -8,10 +8,10 @@ __abbrev_alias::magic_abbrev_expand() {
   emulate -L zsh -o extended_glob
   local MATCH
   LBUFFER=${LBUFFER%%(#m)[-_a-zA-Z0-9]#}
-  local abbr=${_abbrev_aliases[$MATCH]:-  $MATCH}
-  local kind=${abbr[1,1]}
-  local is_eval=${abbr[2,2]}
-  local newbuffer=${abbr[3,-1]}
+  local abbr=${_abbrev_aliases[$MATCH]}
+  local kind=${${(s.\0.)abbr}[1]}
+  local is_eval=${${(s.\0.)abbr}[2]}
+  local newbuffer=${${(s.\0.)abbr}[3]:-$MATCH}
   if [[ $kind == "c" && $LBUFFER != "" ]]; then
     newbuffer=$MATCH
   fi
@@ -46,16 +46,25 @@ __abbrev_alias::init() {
   bindkey "^x^M" accept-line
 }
 
-__abbrev_alias::list() {
+__abbrev_alias::show() {
   local kind_filter=$1
-  local key value kind
-  for key in ${(k)_abbrev_aliases}; do
-    value=${_abbrev_aliases[$key]}
-    kind=${value[1,1]}
-    value=${value[3,-1]}
-    if [[ $kind_filter == a || $kind_filter == $kind ]]; then
-      echo "$key='$value'"
-    fi
+  local key=$2
+  local abbr=${_abbrev_aliases[$key]}
+  test -n "$abbr" || return 1
+  local kind=${${(s.\0.)abbr}[1]}
+  local value=${${(s.\0.)abbr}[3]}
+  if [[ $kind_filter == $kind ]]; then
+    echo "$key='$value'"
+  fi
+  return 0
+}
+
+__abbrev_alias::list() {
+  local kind_filters=$1
+  for kind_filter in ${(s::)kind_filters}; do
+    for key in ${(ko)_abbrev_aliases}; do
+      __abbrev_alias::show $kind_filter $key
+    done
   done
 }
 
@@ -86,6 +95,7 @@ __abbrev_alias::unregist() {
     unset "_abbrev_aliases[$key]"
   else
     echo "no such alias: $key" >&2
+    return 1
   fi
 }
 
@@ -102,39 +112,75 @@ __abbrev_alias::regist() {
     g) alias -g $key="$value";;
     c) alias    $key="$value";;
   esac
-  _abbrev_aliases[$key]="$kind$is_eval$value"
+  _abbrev_aliases[$key]="$kind\0$is_eval\0$value"
 }
 
 # option parse & execute
+zparseopts -D -M -A opts -- \
+  -init i=-init \
+  -help h=-help \
+  -version v=-version \
+  -unset u=-unset \
+  -command c=-command \
+  -global g=-global \
+  -function f=-function \
+  -eval e=-eval
+
+# init
+if [[ -n ${opts[(i)--init]} ]]; then
+  __abbrev_alias::init
+  return 0
+fi
+
+# help
+if [[ -n ${opts[(i)--help]} ]]; then
+  __abbrev_alias::help
+  return 0
+fi
+
+# version
+if [[ -n ${opts[(i)--version]} ]]; then
+  __abbrev_alias::version
+  return 0
+fi
+
+# unregist
+if [[ -n ${opts[(i)--unset]} ]]; then
+  local result=0
+  while [ $# -gt 0 ]; do
+    __abbrev_alias::unregist "$1"
+    test $? -ne 0 && result=1
+    shift
+  done
+  return $result
+fi
+
+# set options
 local kind
-local is_eval=0
-local -a args
+if [[ -n ${opts[(i)--command]} ]]; then
+  kind=c
+elif [[ -n ${opts[(i)--global]} ]]; then
+  kind=g
+elif [[ -n ${opts[(i)--function]} ]]; then
+  kind=f
+fi 
+[[ ! -n ${opts[(i)--eval]} ]]; local is_eval=$?
+
+#list
+if [ $# -eq 0 ]; then
+  __abbrev_alias::list ${kind:-gc}
+  return 0
+fi
+
+# regist or show
+local result=0
 while [ $# -gt 0 ]; do
-  case "$1" in
-    -i|--init)      __abbrev_alias::init; return;;
-    -h|--help)      __abbrev_alias::help; return;;
-    -v|--version)   __abbrev_alias::version; return;;
-    -u|--unset)     kind=u;;
-    -c|--command)   kind=c;;
-    -g|--global)    kind=g;;
-    -f|--function)  kind=f;;
-    -e|--eval)      is_eval=1;;
-    *) args=("${args[@]}" $1) ;;
-  esac
+  if [[ "$1" =~ "=" ]]; then
+    __abbrev_alias::regist ${kind:-c} $is_eval "$1"
+  else
+    __abbrev_alias::show ${kind:-c} $1
+    test $? -ne 0 && result=1
+  fi
   shift
 done
-
-local value
-if [[ $#args == 0 ]]; then
-  __abbrev_alias::list ${kind:-a}
-  return
-fi
-if [[ "$kind" == "u" ]]; then
-  for value in ${args[@]}; do
-    __abbrev_alias::unregist $value
-  done
-else
-  for value in ${args[@]}; do
-    __abbrev_alias::regist ${kind:-c} $is_eval $value
-  done
-fi
+return $result
