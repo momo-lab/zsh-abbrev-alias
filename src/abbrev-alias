@@ -5,6 +5,7 @@ typeset -g _ABBREV_ALIAS_VERSION='0.2.0'
 typeset -Ag _abbrev_aliases
 
 __abbrev_alias::magic_abbrev_expand() {
+  emulate -L zsh -o extended_glob
   local MATCH
   LBUFFER=${LBUFFER%%(#m)[-_a-zA-Z0-9]#}
   local abbr=${_abbrev_aliases[$MATCH]:-  $MATCH}
