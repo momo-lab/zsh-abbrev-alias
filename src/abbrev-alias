@@ -35,7 +35,6 @@ __abbrev_alias::no_magic_abbrev_expand() {
 }
 
 __abbrev_alias::init() {
-  setopt extended_glob
   zle -N __abbrev_alias::magic_abbrev_expand
   zle -N __abbrev_alias::no_magic_abbrev_expand
   zle -N __abbrev_alias::magic_abbrev_expand_and_insert
