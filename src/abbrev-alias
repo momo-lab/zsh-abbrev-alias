@@ -7,7 +7,10 @@ typeset -Ag _abbrev_aliases
 __abbrev_alias::magic_abbrev_expand() {
   emulate -L zsh -o extended_glob
   local MATCH
-  LBUFFER=${LBUFFER%%(#m)[-_a-zA-Z0-9]#}
+  LBUFFER_NO_LAST_WORD=${LBUFFER%%(#m)[-_a-zA-Z0-9#\.]#}
+  if [[ -n $LBUFFER_NO_LAST_WORD && $LBUFFER_NO_LAST_WORD != *' ' ]]; then
+    return
+  fi
   local abbr=${_abbrev_aliases[$MATCH]}
   local kind=${${(s.\0.)abbr}[1]}
   local is_eval=${${(s.\0.)abbr}[2]}
@@ -18,7 +21,7 @@ __abbrev_alias::magic_abbrev_expand() {
   if [[ "$is_eval" == "1" ]]; then
     newbuffer=$(eval "echo \"$newbuffer\"")
   fi
-  LBUFFER+=$newbuffer
+  LBUFFER="${LBUFFER_NO_LAST_WORD}${newbuffer}"
 }
 
 __abbrev_alias::magic_abbrev_expand_and_insert() {
