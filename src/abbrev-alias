@@ -12,7 +12,7 @@ __abbrev_alias::magic_abbrev_expand() {
   local kind=${${(s.\0.)abbr}[1]}
   local is_eval=${${(s.\0.)abbr}[2]}
   local newbuffer=${${(s.\0.)abbr}[3]:-$MATCH}
-  if [[ $kind == "c" && $LBUFFER != "" ]]; then
+  if [[ $kind == "c" && ! ( $LBUFFER == "" || $LBUFFER =~ "(\\||;|&|\\$\\(|\`) ?$" ) ]]; then
     newbuffer=$MATCH
   fi
   if [[ "$is_eval" == "1" ]]; then
