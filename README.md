@@ -31,6 +31,9 @@ $ git push origin B<push space key>
 ->
 $ git push origin master 
 ```
+## Notes
+This plugin is compatible with https://github.com/MichaelAquilina/zsh-you-should-use,
+you only need to source it first
 
 ## Help
 Show `abbrev-alias --help`.
