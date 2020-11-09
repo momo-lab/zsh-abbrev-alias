@@ -123,6 +123,7 @@ __abbrev_alias::regist() {
 }
 
 # option parse & execute
+local -A opts
 zparseopts -D -M -A opts -- \
   -init i=-init \
   -help h=-help \
