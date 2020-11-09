@@ -99,7 +99,7 @@ __abbrev_alias::unregist() {
   fi
 }
 
-if [[ -v $YSU_VERSION ]]; then
+if [ "${YSU_VERSION+exists}" ]; then
   typeset -agUx YSU_IGNORED_ALIASES
 fi
 __abbrev_alias::regist() {
@@ -116,7 +116,7 @@ __abbrev_alias::regist() {
     c) alias    $key="$value";;
   esac
 
-  if [[ -v $YSU_VERSION ]]; then
+  if [ "${YSU_VERSION+exists}" ]; then
     YSU_IGNORED_ALIASES+=($key)
   fi
   _abbrev_aliases[$key]="$kind\0$is_eval\0$value"
