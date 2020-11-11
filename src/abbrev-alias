@@ -1,8 +1,38 @@
 #!/usr/bin/env zsh
 
-typeset -g _ABBREV_ALIAS_VERSION='0.2.0'
+typeset -g _ABBREV_ALIAS_VERSION='0.3.0'
+typeset -g _ABBREV_ALIAS_RECURSIVE_LIMIT=8
 
 typeset -Ag _abbrev_aliases
+
+__abbrev_alias::recursive_command() {
+  local counter=$1; shift
+  if [[ $counter -ge $_ABBREV_ALIAS_RECURSIVE_LIMIT ]]; then
+    echo "$*"
+    return
+  fi
+
+  local kind=$1; shift
+  local result=""
+  while [ "$1" != "" ]; do
+    local abbr=${_abbrev_aliases[$1]}
+    local value=${${(s.\0.)abbr}[2]:-$1}
+    local abbr_kind=${${(s.\0.)abbr}[1]}
+    if [[ "$kind" == "$abbr_kind" ]]; then
+      if [[ "$1" != "$value" ]]; then
+        local is_recursive=${${(s.\0.)abbr}[4]}
+        if [[ "$is_recursive" == "1" ]]; then
+          value=$(__abbrev_alias::recursive_command $(($counter+1)) $abbr_kind ${=value})
+        fi
+      fi
+    else
+      value=$1
+    fi
+    result+=" $value"
+    shift
+  done
+  echo "${result:1}"
+}
 
 __abbrev_alias::magic_abbrev_expand() {
   emulate -L zsh -o extended_glob
@@ -10,13 +40,18 @@ __abbrev_alias::magic_abbrev_expand() {
   LBUFFER=${LBUFFER%%(#m)[-_a-zA-Z0-9#%+.~]#}
   local abbr=${_abbrev_aliases[$MATCH]}
   local kind=${${(s.\0.)abbr}[1]}
-  local is_eval=${${(s.\0.)abbr}[2]}
-  local newbuffer=${${(s.\0.)abbr}[3]:-$MATCH}
+  local newbuffer=${${(s.\0.)abbr}[2]:-$MATCH}
   if [[ $kind == "c" && ! ( $LBUFFER == "" || $LBUFFER =~ "(\\||;|&|\\$\\(|\`) ?$" ) ]]; then
     newbuffer=$MATCH
-  fi
-  if [[ "$is_eval" == "1" ]]; then
-    newbuffer=$(eval "echo \"$newbuffer\"")
+  else
+    local is_eval=${${(s.\0.)abbr}[3]}
+    if [[ "$is_eval" == "1" ]]; then
+      newbuffer=$(eval "echo \"$newbuffer\"")
+    fi
+    local is_recursive=${${(s.\0.)abbr}[4]}
+    if [[ "$is_recursive" == "1" ]]; then
+      newbuffer=$(__abbrev_alias::recursive_command 0 $kind ${=newbuffer})
+    fi
   fi
   LBUFFER+=$newbuffer
 }
@@ -52,7 +87,7 @@ __abbrev_alias::show() {
   local abbr=${_abbrev_aliases[$key]}
   test -n "$abbr" || return 1
   local kind=${${(s.\0.)abbr}[1]}
-  local value=${${(s.\0.)abbr}[3]}
+  local value=${${(s.\0.)abbr}[2]}
   if [[ $kind_filter == $kind ]]; then
     echo "$key='$value'"
   fi
@@ -81,7 +116,8 @@ __abbrev_alias::help() {
   echo "options:"
   echo "  -c, --command   register alias as 'alias name=value'"
   echo "  -g, --global    register alias as 'alias -g name=value'"
-  echo "  -e, --eval      evaluates subshells on expansion. "
+  echo "  -e, --eval      evaluates subshells on expansion"
+  echo "  -r, --recursive expand aliases recursively"
   echo "  -u, --unset     unregister alias"
   echo "  -i, --init      initialize abbrev-alias. execute with .zshrc"
   echo "  -h, --help      show this help"
@@ -103,7 +139,7 @@ if [ "${YSU_VERSION+exists}" ]; then
   typeset -agUx YSU_IGNORED_ALIASES
 fi
 __abbrev_alias::regist() {
-  local kind=$1 is_eval=$2 key=${3%%=*} value=${3#*=}
+  local kind=$1 key=${2%%=*} value=${2#*=} is_eval=$3 is_recursive=$4
   if [[ "$kind" == "f" ]]; then
     echo "WARN: -f option is deprecated. Use -g -e options." 1>&2
     echo "      ex) abbrev-alias -g -e $key='\$($value)'" 1>&2
@@ -119,7 +155,7 @@ __abbrev_alias::regist() {
   if [ "${YSU_VERSION+exists}" ]; then
     YSU_IGNORED_ALIASES+=($key)
   fi
-  _abbrev_aliases[$key]="$kind\0$is_eval\0$value"
+  _abbrev_aliases[$key]="$kind\0$value\0$is_eval\0$is_recursive"
 }
 
 # option parse & execute
@@ -132,7 +168,8 @@ zparseopts -D -M -A opts -- \
   -command c=-command \
   -global g=-global \
   -function f=-function \
-  -eval e=-eval
+  -eval e=-eval \
+  -recursive r=-recursive
 
 # init
 if [[ -n ${opts[(i)--init]} ]]; then
@@ -173,6 +210,7 @@ elif [[ -n ${opts[(i)--function]} ]]; then
   kind=f
 fi 
 [[ ! -n ${opts[(i)--eval]} ]]; local is_eval=$?
+[[ ! -n ${opts[(i)--recursive]} ]]; local is_recursive=$?
 
 #list
 if [ $# -eq 0 ]; then
@@ -184,7 +222,7 @@ fi
 local result=0
 while [ $# -gt 0 ]; do
   if [[ "$1" =~ "=" ]]; then
-    __abbrev_alias::regist ${kind:-c} $is_eval "$1"
+    __abbrev_alias::regist ${kind:-c} "$1" $is_eval $is_recursive
   else
     __abbrev_alias::show ${kind:-c} $1
     test $? -ne 0 && result=1
