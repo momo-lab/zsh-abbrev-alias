@@ -10,8 +10,8 @@ __abbrev_alias::magic_abbrev_expand() {
   LBUFFER=${LBUFFER%%(#m)[-_a-zA-Z0-9#%+.~]#}
   local abbr=${_abbrev_aliases[$MATCH]}
   local kind=${${(s.\0.)abbr}[1]}
-  local is_eval=${${(s.\0.)abbr}[2]}
-  local newbuffer=${${(s.\0.)abbr}[3]:-$MATCH}
+  local newbuffer=${${(s.\0.)abbr}[2]:-$MATCH}
+  local is_eval=${${(s.\0.)abbr}[3]}
   if [[ $kind == "c" && ! ( $LBUFFER == "" || $LBUFFER =~ "(\\||;|&|\\$\\(|\`) ?$" ) ]]; then
     newbuffer=$MATCH
   fi
@@ -52,7 +52,7 @@ __abbrev_alias::show() {
   local abbr=${_abbrev_aliases[$key]}
   test -n "$abbr" || return 1
   local kind=${${(s.\0.)abbr}[1]}
-  local value=${${(s.\0.)abbr}[3]}
+  local value=${${(s.\0.)abbr}[2]}
   if [[ $kind_filter == $kind ]]; then
     echo "$key='$value'"
   fi
@@ -119,7 +119,7 @@ __abbrev_alias::regist() {
   if [ "${YSU_VERSION+exists}" ]; then
     YSU_IGNORED_ALIASES+=($key)
   fi
-  _abbrev_aliases[$key]="$kind\0$is_eval\0$value"
+  _abbrev_aliases[$key]="$kind\0$value\0$is_eval"
 }
 
 # option parse & execute
