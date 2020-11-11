@@ -52,7 +52,7 @@ Show `abbrev-alias --help`.
 
 ```zsh
 $ abbrev-alias --help
-abbrev-alias 0.2.0
+abbrev-alias 0.3.0
 usage: abbrev-alias [OPTIONS] {name=value ...}
        abbrev-alias -u {name ...}
        abbrev-alias --init
