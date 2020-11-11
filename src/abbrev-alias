@@ -103,7 +103,7 @@ if [ "${YSU_VERSION+exists}" ]; then
   typeset -agUx YSU_IGNORED_ALIASES
 fi
 __abbrev_alias::regist() {
-  local kind=$1 is_eval=$2 key=${3%%=*} value=${3#*=}
+  local kind=$1 key=${2%%=*} value=${2#*=} is_eval=$3
   if [[ "$kind" == "f" ]]; then
     echo "WARN: -f option is deprecated. Use -g -e options." 1>&2
     echo "      ex) abbrev-alias -g -e $key='\$($value)'" 1>&2
@@ -184,7 +184,7 @@ fi
 local result=0
 while [ $# -gt 0 ]; do
   if [[ "$1" =~ "=" ]]; then
-    __abbrev_alias::regist ${kind:-c} $is_eval "$1"
+    __abbrev_alias::regist ${kind:-c} "$1" $is_eval
   else
     __abbrev_alias::show ${kind:-c} $1
     test $? -ne 0 && result=1
