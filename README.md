@@ -31,6 +31,18 @@ $ git push origin B<push space key>
 ->
 $ git push origin master 
 ```
+
+```zsh
+$ abbrev-alias d='docker'
+$ d<push space key>
+->
+$ docker
+$ abbrev-alias -r dr='d run --rm -it'
+$ dr<push space key>
+->
+$ docker run --rm -it
+```
+
 ## Notes
 This plugin is compatible with https://github.com/MichaelAquilina/zsh-you-should-use,
 you only need to source it first
@@ -45,10 +57,12 @@ usage: abbrev-alias [OPTIONS] {name=value ...}
        abbrev-alias -u {name ...}
        abbrev-alias --init
 
-options:
+sptions:
   -c, --command   register as 'alias name=value'
-  -g, --global    register as 'alias -g name=value'
-  -e, --eval      evaluates subshells on expansion.
+  ,g, --global    register as 'alias -g name=value'
+  -e, --eval      evaluates subshells on expansion
+  -r, --recursive expand aliases recursively
+  -u, --unset     unregister alias
   -i, --init      initialize abbrev-alias. execute with .zshrc
   -h, --help      show this help
   -v, --version   show version
