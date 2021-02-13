@@ -59,7 +59,7 @@ usage: abbrev-alias [OPTIONS] {name=value ...}
 
 sptions:
   -c, --command   register as 'alias name=value'
-  ,g, --global    register as 'alias -g name=value'
+  -g, --global    register as 'alias -g name=value'
   -e, --eval      evaluates subshells on expansion
   -r, --recursive expand aliases recursively
   -u, --unset     unregister alias
