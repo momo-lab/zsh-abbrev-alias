@@ -37,11 +37,11 @@ __abbrev_alias::recursive_command() {
 __abbrev_alias::magic_abbrev_expand() {
   emulate -L zsh -o extended_glob
   local MATCH
-  LBUFFER=${LBUFFER%%(#m)[-_a-zA-Z0-9#%+.~]#}
+  LBUFFER=${LBUFFER%%(#m)[-_a-zA-Z0-9#%+.~,:]#}
   local abbr=${_abbrev_aliases[$MATCH]}
   local kind=${${(s.\0.)abbr}[1]}
   local newbuffer=${${(s.\0.)abbr}[2]:-$MATCH}
-  if [[ $kind == "c" && ! ( $LBUFFER == "" || $LBUFFER =~ "(\\||;|&|\\$\\(|\`) ?$" ) ]]; then
+  if [[ $kind == "c" && ! $LBUFFER =~ "(^|\\||;|&|\\$\\(|\`) *$" ]]; then
     newbuffer=$MATCH
   else
     local is_eval=${${(s.\0.)abbr}[3]}
