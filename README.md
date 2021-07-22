@@ -53,13 +53,14 @@ Show `abbrev-alias --help`.
 ```zsh
 $ abbrev-alias --help
 abbrev-alias 0.3.0
-usage: abbrev-alias [OPTIONS] {name=value ...}
-       abbrev-alias -u {name ...}
-       abbrev-alias --init
+USAGE:
+  abbrev-alias [OPTIONS] {name=value ...}
+  abbrev-alias -u {name ...}
+  abbrev-alias --init
 
-sptions:
-  -c, --command   register as 'alias name=value'
-  -g, --global    register as 'alias -g name=value'
+OPTIONS:
+  -c, --command   register alias as 'alias name=value'
+  -g, --global    register alias as 'alias -g name=value' like
   -e, --eval      evaluates subshells on expansion
   -r, --recursive expand aliases recursively
   -u, --unset     unregister alias
