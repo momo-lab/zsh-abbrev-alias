@@ -3,6 +3,24 @@
 typeset -g _ABBREV_ALIAS_VERSION='0.3.0'
 typeset -g _ABBREV_ALIAS_RECURSIVE_LIMIT=8
 
+if [ "${YSU_VERSION+exists}" ]; then
+  typeset -agUx YSU_IGNORED_GLOBAL_ALIASES
+  typeset -agUx YSU_IGNORED_ALIASES
+
+  __remove_item_from_array() {
+    local array_name=$1
+    local item=$2
+    eval "local -a array=(\${${array_name}[@]})"
+    local new_array
+    for i in $array; do
+      if [[ "$i" != "$item" ]]; then
+        new_array+=($i)
+      fi
+    done
+    eval "${array_name}=(\${new_array[@]})"
+  }
+fi
+
 typeset -Ag _abbrev_aliases
 
 __abbrev_alias::recursive_command() {
@@ -130,15 +148,16 @@ __abbrev_alias::unregist() {
   if [[ -n "${_abbrev_aliases[$key]}" ]]; then
     unalias $key
     unset "_abbrev_aliases[$key]"
+    if [ "${YSU_VERSION+exists}" ]; then
+      __remove_item_from_array YSU_IGNORED_GLOBAL_ALIASES $key
+      __remove_item_from_array YSU_IGNORED_ALIASES $key
+    fi
   else
     echo "no such alias: $key" >&2
     return 1
   fi
 }
 
-if [ "${YSU_VERSION+exists}" ]; then
-  typeset -agUx YSU_IGNORED_ALIASES
-fi
 __abbrev_alias::regist() {
   local kind=$1 key=${2%%=*} value=${2#*=} is_eval=$3 is_recursive=$4
   if [[ "$kind" == "f" ]]; then
@@ -154,7 +173,11 @@ __abbrev_alias::regist() {
   esac
 
   if [ "${YSU_VERSION+exists}" ]; then
-    YSU_IGNORED_ALIASES+=($key)
+    if [[ "$kind" == "g" ]]; then
+      YSU_IGNORED_GLOBAL_ALIASES+=($key)
+    else
+      YSU_IGNORED_ALIASES+=($key)
+    fi
   fi
   _abbrev_aliases[$key]="$kind\0$value\0$is_eval\0$is_recursive"
 }
