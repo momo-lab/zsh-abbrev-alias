@@ -45,7 +45,7 @@ $ docker run --rm -it
 
 ## Notes
 This plugin is compatible with https://github.com/MichaelAquilina/zsh-you-should-use,
-you only need to source it first
+you only need to source it first.
 
 ## Help
 Show `abbrev-alias --help`.
